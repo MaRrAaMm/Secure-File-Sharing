@@ -1,4 +1,5 @@
 Secure File Sharing Web Platform (Backend)
+
 📌 Project Overview
 
 This project is a Secure File Sharing Backend System designed to allow users to upload, download, and share files with strong security guarantees.
@@ -15,7 +16,7 @@ Full audit logging
 
 The goal is not just functionality, but to demonstrate secure backend design principles.
 
-🎯 Problem Statement
+ Problem Statement
 
 Traditional file sharing systems often suffer from security issues such as:
 
@@ -87,7 +88,7 @@ Only the owner can share a file.
 Download access depends on ownership or explicit sharing permission.
 
 📂 Secure File Handling Flow
-1️⃣ File Upload
+1- File Upload
 
 User sends a file using multipart/form-data.
 
@@ -107,7 +108,7 @@ File metadata is stored in MongoDB.
 
 Upload action is logged.
 
-2️⃣ File Download
+2- File Download
 
 User requests a file download.
 
@@ -127,7 +128,7 @@ File is sent to the user.
 
 Download action is logged.
 
-3️⃣ File Sharing
+3- File Sharing
 
 Only the file owner can share a file.
 
@@ -167,35 +168,8 @@ Traceability
 
 Security auditing capability
 
-🧱 Project Architecture
-src/
-├── Modules/
-│   ├── auth/
-│   ├── file/
-│   ├── log/
-│   └── user/
-├── DB/
-│   └── Models/
-├── middlewares/
-├── utils/
-│   ├── crypto/
-│   └── fileUpload/
-└── app.controller.js
 
-
-The project follows a modular architecture, separating:
-
-Business logic
-
-Data models
-
-Middleware
-
-Utilities
-
-This improves maintainability and scalability.
-
-🧪 API Endpoints (Summary)
+API Endpoints (Summary)*
 Auth
 
 POST /auth/register
@@ -214,7 +188,7 @@ Logs
 
 GET /logs/my-logs
 
-🧰 Technologies Used
+Technologies Used
 
 Node.js
 
@@ -232,7 +206,7 @@ AES Encryption (crypto)
 
 Joi Validation
 
-▶️ How to Run Locally
+ How to Run Locally
 
 Clone the repository
 
@@ -270,7 +244,7 @@ Encryption
 
 Logging
 
-🧠 Conclusion
+** Conclusion
 
 This project demonstrates how secure backend systems can be designed by combining:
 
