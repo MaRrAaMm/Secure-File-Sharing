@@ -13,13 +13,13 @@ const authLimiter = rateLimit({
   windowMs:15 * 60 * 1000, 
   max:50, 
   message:{
-    success: false,
+    success:false,
     message:"Too many requests, please try again later",
   },
 });
-const bootstrap = async (app, express) => {
+const bootstrap = async(app, express)=>{
   app.use(helmet());
-  app.use(cors({ origin: process.env.ALLOWED_ORIGIN ||"*" }));
+  app.use(cors({origin: process.env.ALLOWED_ORIGIN ||"*"}));
   app.use(express.json());
   await connectDB();
 
