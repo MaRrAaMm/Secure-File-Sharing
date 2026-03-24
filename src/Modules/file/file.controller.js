@@ -1,9 +1,8 @@
 import { Router } from "express";
 import { isAuthenticated } from "../../Middlewares/auth.middleware.js";
 import { isAuthorized } from "../../Middlewares/authorization.middleware.js";
-import { roles } from "../../DB/Models/user.model.js";
 import { uploadFile, fileValidation  as multerFileValidation } from "../../utils/fileUploads/multer.js";
-import { isValid } from "../../middlewares/validation.middleware.js";
+import { isValid } from "../../Middlewares/validation.middleware.js";
 import * as fileValidation from "./file.validation.js";
 import * as fileService from "./file.service.js";
 import { asyncHandler } from "../../utils/index.js";
