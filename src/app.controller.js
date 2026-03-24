@@ -19,7 +19,8 @@ const authLimiter = rateLimit({
 });
 const bootstrap = async(app, express)=>{
   app.use(helmet());
-  app.use(cors({origin: process.env.ALLOWED_ORIGIN ||"*"}));
+  //app.use(cors({origin:process.env.ALLOWED_ORIGIN ||"*"}));
+  app.use(cors());
   app.use(express.json());
   await connectDB();
 
@@ -32,5 +33,4 @@ const bootstrap = async(app, express)=>{
   app.use(notFound);
   app.use(globalError);
 };
-
 export default bootstrap;
