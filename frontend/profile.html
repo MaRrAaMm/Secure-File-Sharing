@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Profile — Secure File Sharing</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap');
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #070714; --surface: #0e0e24; --surface2: #13132e;
+      --border: #1e1b4b; --accent: #6366f1; --accent-hover: #4f46e5;
+      --text: #e0e7ff; --muted: #9ca3af; --dim: #374151;
+      --danger: #ef4444; --success: #22c55e;
+    }
+    body { background: var(--bg); min-height: 100vh; font-family: 'Space Grotesk', sans-serif; color: var(--text); }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+      background-size: 40px 40px; pointer-events: none; z-index: 0;
+    }
+
+    /* navbar */
+    .navbar {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0.875rem 1.5rem; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 100;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-brand svg { width: 22px; height: 22px; fill: #818cf8; }
+    .nav-brand span { font-size: 15px; font-weight: 600; color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .btn-nav {
+      padding: 7px 16px; border-radius: 8px; font-size: 13px;
+      font-family: inherit; cursor: pointer; transition: all 0.2s; font-weight: 500;
+    }
+    .btn-back { background: transparent; border: 1px solid var(--border); color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .btn-back:hover { border-color: var(--accent); color: var(--text); }
+    .btn-back svg { width: 14px; height: 14px; fill: currentColor; }
+    .btn-logout { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* main */
+    .main { position: relative; z-index: 1; padding: 2rem 1.5rem; max-width: 700px; margin: 0 auto; }
+
+    /* card */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 1.75rem; margin-bottom: 1.25rem;
+    }
+    .card-title {
+      font-size: 14px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 1.25rem;
+    }
+
+    /* avatar */
+    .avatar-section { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; }
+    .avatar {
+      width: 72px; height: 72px; border-radius: 50%;
+      background: #1e1b4b; border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 600; color: #818cf8;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-info h2 { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .avatar-info p { font-size: 13px; color: var(--muted); }
+    .badge-role {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 20px; padding: 3px 10px; font-size: 11px; color: #818cf8; margin-top: 6px;
+    }
+
+    /* form */
+    .form-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; display: block; }
+    .input-wrap { position: relative; }
+    .input-wrap svg {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%); width: 16px; height: 16px; fill: var(--dim); pointer-events: none;
+    }
+    .form-control {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 14px;
+      font-family: inherit; padding: 10px 38px 10px 14px; outline: none; transition: border 0.2s;
+    }
+    .form-control:focus { border-color: var(--accent); }
+    .form-control::placeholder { color: var(--dim); }
+    .form-control:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* toggle switch */
+    .pref-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .pref-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .pref-info { flex: 1; }
+    .pref-label { font-size: 14px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
+    .pref-desc { font-size: 12px; color: var(--muted); }
+    .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: var(--dim);
+      border-radius: 24px; cursor: pointer; transition: 0.3s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.3s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--accent); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* buttons */
+    .btn-save {
+      padding: 10px 24px; background: var(--accent); border: none;
+      border-radius: 10px; color: white; font-size: 14px; font-weight: 500;
+      font-family: inherit; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-save:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    .btn-danger {
+      padding: 10px 24px; background: transparent;
+      border: 1px solid rgba(239,68,68,0.4); border-radius: 10px;
+      color: #f87171; font-size: 14px; font-weight: 500;
+      font-family: inherit; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.1); }
+
+    /* alert */
+    .alert-msg { border-radius: 8px; font-size: 13px; padding: 10px 14px; margin-bottom: 1rem; display: none; }
+    .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+    .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+
+    /* spinner */
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 6px; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* toast */
+    .toast {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500;
+      z-index: 300; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+    .toast.error { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+
+    /* delete modal */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); display: none; align-items: center;
+      justify-content: center; z-index: 99999;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #1a1a3e; border: 1px solid #4338ca;
+      border-radius: 20px; padding: 2rem; width: 90%; max-width: 400px;
+      position: relative; z-index: 100000; text-align: center;
+    }
+    .modal-icon { width: 52px; height: 52px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+    .modal-icon svg { width: 24px; height: 24px; fill: #f87171; }
+    .modal-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
+    .modal-actions { display: flex; gap: 10px; }
+    .btn-cancel { flex: 1; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); font-family: inherit; cursor: pointer; font-size: 14px; }
+    .btn-cancel:hover { border-color: var(--accent); color: var(--text); }
+    .btn-delete-confirm { flex: 1; padding: 10px; background: var(--danger); border: none; border-radius: 10px; color: white; font-family: inherit; cursor: pointer; font-size: 14px; font-weight: 500; }
+    .btn-delete-confirm:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="nav-brand" href="home.html">
+    <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l5 2.18V11c0 3.5-2.33 6.79-5 7.93C9.33 17.79 7 14.5 7 11V7.18L12 5z"/></svg>
+    <span>Secure File Sharing</span>
+  </a>
+  <div class="nav-right">
+    <a class="btn-nav btn-back" href="home.html">
+      <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+      My Files
+    </a>
+    <button class="btn-nav btn-logout" onclick="handleLogout()">Logout</button>
+  </div>
+</nav>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Profile Header -->
+  <div class="card">
+    <div class="avatar-section">
+      <div class="avatar" id="avatar-display">?</div>
+      <div class="avatar-info">
+        <h2 id="display-fullname">Loading...</h2>
+        <p id="display-email">...</p>
+        <div class="badge-role">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+          <span id="display-role">user</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Profile -->
+  <div class="card">
+    <p class="card-title">Edit Profile</p>
+    <div class="alert-msg alert-error" id="profile-error"></div>
+    <div class="alert-msg alert-success" id="profile-success"></div>
+
+    <div class="mb-3">
+      <label class="form-label">Full Name</label>
+      <div class="input-wrap">
+        <input type="text" class="form-control" id="fullName" placeholder="Your full name" />
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Profile Picture URL <span style="color:var(--dim);font-size:11px">(optional)</span></label>
+      <div class="input-wrap">
+        <input type="url" class="form-control" id="profilePicture" placeholder="https://..." />
+        <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn-save" id="save-profile-btn" onclick="handleSaveProfile()">Save Changes</button>
+    </div>
+  </div>
+
+  <!-- Account Info -->
+  <div class="card">
+    <p class="card-title">Account Info</p>
+    <div class="alert-msg alert-error" id="account-error"></div>
+    <div class="alert-msg alert-success" id="account-success"></div>
+
+    <div class="mb-3">
+      <label class="form-label">Username</label>
+      <div class="input-wrap">
+        <input type="text" class="form-control" id="username" placeholder="username" />
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <div class="input-wrap">
+        <input type="email" class="form-control" id="email" placeholder="you@example.com" />
+        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn-save" id="save-account-btn" onclick="handleSaveAccount()">Update Account</button>
+    </div>
+  </div>
+
+  <!-- Preferences -->
+  <div class="card">
+    <p class="card-title">Preferences</p>
+
+    <div class="pref-item">
+      <div class="pref-info">
+        <div class="pref-label">Email Notifications</div>
+        <div class="pref-desc">Receive email alerts for file activity</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="emailNotifications" onchange="handleSavePreferences()" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="pref-item">
+      <div class="pref-info">
+        <div class="pref-label">Two-Factor Authentication</div>
+        <div class="pref-desc">Add extra security to your account</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="twoFactorAuth" onchange="handleSavePreferences()" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <div class="pref-item">
+      <div class="pref-info">
+        <div class="pref-label">Auto-delete Expired Files</div>
+        <div class="pref-desc">Automatically remove expired shared files</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="autoDeleteExpiredFiles" onchange="handleSavePreferences()" />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Danger Zone -->
+  <div class="card" style="border-color: rgba(239,68,68,0.3);">
+    <p class="card-title" style="color:#f87171">Danger Zone</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <p style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px">Delete Account</p>
+        <p style="font-size:13px;color:var(--muted)">Permanently delete your account and all your files</p>
+      </div>
+      <button class="btn-danger" onclick="openDeleteModal()">Delete Account</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+    </div>
+    <p class="modal-title">Delete Account</p>
+    <p class="modal-sub">This will permanently delete your account and all your files. This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-delete-confirm" id="delete-btn" onclick="handleDeleteAccount()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = 'http://localhost:3000';
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = 'login.html';
+
+  async function authFetch(url, options = {}) {
+    return fetch(`${API}${url}`, {
+      ...options,
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...options.headers }
+    });
+  }
+
+  // decode token
+  function getTokenPayload() {
+    try { return JSON.parse(atob(token.split('.')[1])); } catch { return {}; }
+  }
+
+  // load user + profile
+  async function loadData() {
+    try {
+      const [userRes, profileRes] = await Promise.all([
+        authFetch('/users/me'),
+        authFetch('/profile/me')
+      ]);
+
+      const userData = await userRes.json();
+      const profileData = await profileRes.json();
+
+      if (userRes.ok) {
+        const u = userData.data;
+        document.getElementById('username').value = u.username || '';
+        document.getElementById('email').value = u.email || '';
+        document.getElementById('display-email').textContent = u.email || '';
+        document.getElementById('display-role').textContent = u.role || 'user';
+      }
+
+      if (profileRes.ok) {
+        const p = profileData.data;
+        document.getElementById('fullName').value = p.fullName || '';
+        document.getElementById('profilePicture').value = p.profilePicture || '';
+        document.getElementById('display-fullname').textContent = p.fullName || 'No name set';
+        document.getElementById('emailNotifications').checked = p.preferences?.emailNotifications ?? true;
+        document.getElementById('twoFactorAuth').checked = p.preferences?.twoFactorAuth ?? false;
+        document.getElementById('autoDeleteExpiredFiles').checked = p.preferences?.autoDeleteExpiredFiles ?? false;
+
+        // avatar
+        const avatar = document.getElementById('avatar-display');
+        if (p.profilePicture && !p.profilePicture.includes('ui-avatars')) {
+          avatar.innerHTML = `<img src="${p.profilePicture}" alt="avatar" onerror="this.parentElement.textContent='${(p.fullName||'U')[0].toUpperCase()}'" />`;
+        } else {
+          avatar.textContent = (p.fullName || 'U')[0].toUpperCase();
+        }
+      } else {
+        document.getElementById('display-fullname').textContent = getTokenPayload().email?.split('@')[0] || 'User';
+      }
+    } catch { showToast('Failed to load profile', 'error'); }
+  }
+
+  // save profile
+  async function handleSaveProfile() {
+    const fullName = document.getElementById('fullName').value.trim();
+    const profilePicture = document.getElementById('profilePicture').value.trim();
+    const btn = document.getElementById('save-profile-btn');
+    hideMsg('profile-error'); hideMsg('profile-success');
+
+    if (!fullName) { showMsg('profile-error', 'Full name is required'); return; }
+
+    btn.innerHTML = '<span class="spinner"></span>Saving...';
+    btn.disabled = true;
+
+    try {
+      const res = await authFetch('/profile/upsert', {
+        method: 'POST',
+        body: JSON.stringify({ fullName, ...(profilePicture && { profilePicture }) })
+      });
+      const data = await res.json();
+      if (!res.ok) { showMsg('profile-error', data.message || 'Failed to save'); return; }
+      showMsg('profile-success', 'Profile updated successfully!');
+      document.getElementById('display-fullname').textContent = fullName;
+      const avatar = document.getElementById('avatar-display');
+      if (profilePicture && !profilePicture.includes('ui-avatars')) {
+        avatar.innerHTML = `<img src="${profilePicture}" alt="avatar" onerror="this.parentElement.textContent='${fullName[0].toUpperCase()}'" />`;
+      } else {
+        avatar.textContent = fullName[0].toUpperCase();
+      }
+      showToast('Profile saved!', 'success');
+    } catch { showMsg('profile-error', 'Server error, please try again');
+    } finally { btn.innerHTML = 'Save Changes'; btn.disabled = false; }
+  }
+
+  // save account
+  async function handleSaveAccount() {
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const btn = document.getElementById('save-account-btn');
+    hideMsg('account-error'); hideMsg('account-success');
+
+    if (!username && !email) { showMsg('account-error', 'Please fill in at least one field'); return; }
+
+    btn.innerHTML = '<span class="spinner"></span>Updating...';
+    btn.disabled = true;
+
+    try {
+      const res = await authFetch('/users/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ ...(username && { username }), ...(email && { email }) })
+      });
+      const data = await res.json();
+      if (!res.ok) { showMsg('account-error', data.message || 'Failed to update'); return; }
+      showMsg('account-success', 'Account updated successfully!');
+      showToast('Account updated!', 'success');
+    } catch { showMsg('account-error', 'Server error, please try again');
+    } finally { btn.innerHTML = 'Update Account'; btn.disabled = false; }
+  }
+
+  // save preferences
+  async function handleSavePreferences() {
+    const preferences = {
+      emailNotifications: document.getElementById('emailNotifications').checked,
+      twoFactorAuth: document.getElementById('twoFactorAuth').checked,
+      autoDeleteExpiredFiles: document.getElementById('autoDeleteExpiredFiles').checked,
+    };
+    try {
+      const res = await authFetch('/profile/upsert', {
+        method: 'POST',
+        body: JSON.stringify({ preferences })
+      });
+      if (res.ok) showToast('Preferences saved!', 'success');
+    } catch {}
+  }
+
+  // delete account
+  function openDeleteModal() { document.getElementById('delete-modal').classList.add('open'); }
+  function closeDeleteModal() { document.getElementById('delete-modal').classList.remove('open'); }
+
+  async function handleDeleteAccount() {
+    const btn = document.getElementById('delete-btn');
+    btn.innerHTML = '<span class="spinner"></span>Deleting...';
+    btn.disabled = true;
+    try {
+      const res = await authFetch('/profile/delete', { method: 'DELETE' });
+      if (res.ok) {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+      } else {
+        const data = await res.json();
+        showToast(data.message || 'Failed to delete', 'error');
+        closeDeleteModal();
+      }
+    } catch { showToast('Server error', 'error');
+    } finally { btn.innerHTML = 'Delete'; btn.disabled = false; }
+  }
+
+  function handleLogout() { localStorage.removeItem('token'); window.location.href = 'login.html'; }
+
+  function showMsg(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.style.display = 'block'; }
+  function hideMsg(id) { document.getElementById(id).style.display = 'none'; }
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  loadData();
+</script>
+
+</body>
+</html>
