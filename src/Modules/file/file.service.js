@@ -35,10 +35,12 @@ export const uploadFile = async(req, res, next) =>{
   return res.status(201).json({
   success:true,
   data:{
-    _id:savedFile._id,
-    originalName:savedFile.originalName,
+    _id: savedFile._id,
+    originalName: savedFile.originalName,
+    encryptedPath: savedFile.encryptedPath,
+    iv: savedFile.iv,
     mimeType: savedFile.mimeType,
-    size:savedFile.size,
+    size: savedFile.size,
     createdAt: savedFile.createdAt,
   },
 });
@@ -53,9 +55,9 @@ export const downloadFile = async(req, res, next) =>{
   //authorization owner shared with download
   const isOwner = file.owner.toString()=== req.authUser._id.toString();
   const isSharedWithDownload = file.sharedWith?.some(
-  (item)=>
-    item.user.toString() === req.authUser._id.toString()&&
-    (item.permission === "download" || item.permission === "read")
+  (item) =>
+    item.user.toString() === req.authUser._id.toString() &&
+    item.permission === "download"
 );
   if(!isOwner&& !isSharedWithDownload){
     return next(new Error("not allowed to download this file",{ cause:403}));
