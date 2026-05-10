@@ -236,10 +236,22 @@
     <p class="empty-sub">Upload your first encrypted file</p>
     <button class="btn-empty" onclick="openUpload()">Upload File</button>
   </div>
+
+  <!-- Shared With Me -->
+  <div class="section-header" style="margin-top:2.5rem">
+    <span class="section-title">Shared With Me</span>
+    <span class="section-count" id="shared-count"></span>
+  </div>
+  <div id="shared-grid" class="files-grid"></div>
+  <div id="shared-empty" class="empty-state" style="display:none">
+    <div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg></div>
+    <p class="empty-title">No shared files</p>
+    <p class="empty-sub">Files shared with you will appear here</p>
+  </div>
 </div>
 
 <!-- Upload Modal -->
-<div class="modal-overlay" id="upload-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;">
+<div class="modal-overlay" id="upload-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;display:none;">
   <div style="background:#1a1a3e;border:1px solid #4338ca;border-radius:20px;padding:2rem;width:90%;max-width:420px;position:relative;z-index:100000;">
     <p class="modal-title">Upload File</p>
     <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
@@ -260,8 +272,13 @@
 <div class="modal-overlay" id="share-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;align-items:center;justify-content:center;display:none;">
   <div style="background:#1a1a3e;border:1px solid #4338ca;border-radius:20px;padding:2rem;width:90%;max-width:420px;position:relative;z-index:100000;">
     <p class="modal-title">Share File</p>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:1rem">Select a user and permission</p>
+    <div style="position:relative;margin-bottom:1rem">
+      <input type="text" id="share-search" placeholder="Search by name or email..." oninput="filterUsers(this.value)"
+        style="width:100%;background:#070714;border:1px solid #1e1b4b;border-radius:10px;color:#e0e7ff;font-size:14px;font-family:inherit;padding:10px 38px 10px 14px;outline:none;" />
+      <svg style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;fill:#374151" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    </div>
     <div class="share-list" id="share-list"></div>
+    <div id="share-no-results" style="display:none;text-align:center;padding:1rem;font-size:13px;color:#9ca3af">No users found</div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeShare()">Cancel</button>
       <button class="btn-confirm" id="share-btn" onclick="handleShare()">Share</button>
@@ -426,31 +443,47 @@
   }
 
   // share
+  let allUsers = [];
+
   async function openShare(fileId) {
     shareFileId = fileId;
     selectedUserId = null;
+    selectedPermission = 'read';
     try {
-      console.log("FINAL URL:", API + `/files/share/${shareFileId}`);
       const res = await authFetch('/users/');
       const data = await res.json();
-      const users = data.data || [];
-      const list = document.getElementById('share-list');
-      if (users.length === 0) { list.innerHTML = '<p style="font-size:13px;color:var(--muted);text-align:center;padding:1rem">No other users found</p>'; }
-      else {
-        list.innerHTML = users.map(u => `
-          <div class="share-user" id="user-${u._id}" onclick="selectUser('${u._id}')">
-            <div class="user-info">
-              <div class="user-avatar">${u.username[0].toUpperCase()}</div>
-              <div><div class="user-name">${u.username}</div><div class="user-email">${u.email}</div></div>
-            </div>
-            <select class="perm-select" id="perm-${u._id}" onclick="event.stopPropagation()" onchange="selectedPermission=this.value">
-              <option value="read">Read</option>
-              <option value="download">Download</option>
-            </select>
-          </div>`).join('');
-      }
+      allUsers = data.data || [];
+      renderUsersList(allUsers);
+      document.getElementById('share-search') && (document.getElementById('share-search').value = '');
       document.getElementById('share-modal').style.display = 'flex';
     } catch { showToast('Failed to load users', 'error'); }
+  }
+
+  function renderUsersList(users) {
+    const list = document.getElementById('share-list');
+    const noResults = document.getElementById('share-no-results');
+    if (users.length === 0) { list.innerHTML = ''; if(noResults) noResults.style.display = 'block'; return; }
+    if(noResults) noResults.style.display = 'none';
+    list.innerHTML = users.map(u => `
+      <div class="share-user" id="user-${u._id}" onclick="selectUser('${u._id}')">
+        <div class="user-info">
+          <div class="user-avatar">${u.username[0].toUpperCase()}</div>
+          <div><div class="user-name">${u.username}</div><div class="user-email">${u.email}</div></div>
+        </div>
+        <select class="perm-select" id="perm-${u._id}" onclick="event.stopPropagation()" onchange="selectedPermission=this.value">
+          <option value="read">Read</option>
+          <option value="download">Download</option>
+        </select>
+      </div>`).join('');
+  }
+
+  async function filterUsers(query) {
+    if (!query.trim()) { renderUsersList(allUsers); return; }
+    try {
+      const res = await authFetch(`/users/?search=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      renderUsersList(data.data || []);
+    } catch {}
   }
 
   function selectUser(userId) {
@@ -493,6 +526,37 @@
   }
 
   loadFiles();
+
+  async function loadSharedFiles() {
+    try {
+      const res = await authFetch('/files/shared-with-me');
+      const data = await res.json();
+      if (!res.ok) return;
+      const files = data.data || [];
+      const grid = document.getElementById('shared-grid');
+      const empty = document.getElementById('shared-empty');
+      document.getElementById('shared-count').textContent = files.length + ' file' + (files.length !== 1 ? 's' : '');
+      if (files.length === 0) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      grid.innerHTML = files.map(f => {
+        const ic = getFileIcon(f.mimeType);
+        return `
+          <div class="file-card">
+            <div class="file-icon ${ic.cls}"><svg viewBox="0 0 24 24">${ic.svg}</svg></div>
+            <div class="file-name" title="${f.originalName}">${f.originalName}</div>
+            <div class="file-meta">${formatSize(f.size)} &nbsp;·&nbsp; ${formatDate(f.createdAt)}</div>
+            <div class="file-actions">
+              <button class="btn-action btn-download" onclick="handleDownload('${f._id}','${f.originalName}')">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Download
+              </button>
+            </div>
+          </div>`;
+      }).join('');
+    } catch { showToast('Failed to load shared files', 'error'); }
+  }
+
+  loadSharedFiles();
 </script>
 </body>
 </html>

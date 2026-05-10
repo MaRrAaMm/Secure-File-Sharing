@@ -130,6 +130,18 @@ export const shareFile = async(req, res, next) =>{
   },
 });
 };
+export const getSharedWithMe = async (req, res, next) => {
+  const files = await File.find({
+    "sharedWith.user": req.authUser._id,
+  })
+  .select("-encryptedPath -iv -__v -updatedAt")
+  .sort({ createdAt: -1 });
+
+  return res.status(200).json({
+    success: true,
+    data: files,
+  });
+};
 
 export const getMyFiles =async (req, res, next)=>{
   const files = await File.find({owner: req.authUser._id})

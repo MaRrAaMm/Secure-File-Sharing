@@ -35,6 +35,12 @@ router.get("/",
   isAuthenticated,
   asyncHandler(fileService.getMyFiles)
 );
+
+router.get(
+  "/shared-with-me",
+  isAuthenticated,
+  asyncHandler(fileService.getSharedWithMe)
+);
 router.delete(
   "/:fileId",
   isAuthenticated,
